@@ -97,7 +97,8 @@ if ($month != 2){
 # read parameters from file
 my ($latitude, $longitude, $timezone) = readParameters();
 my $B = $latitude*$d2r;                              # latitude in radian
-my $hours = calcHours($hour, $minute, $timezone);    # hours since 12 utc
+my $hours = calcHours($hour, $minute, $timezone);    # hours since 00 utc
+my $T = yearday($day, $month, $year, $hours);        # Julian days since Jan 1, 2000, 12:00 UT
 
 
 sub printExit {
@@ -138,4 +139,27 @@ sub calcHours {
 	$res += ($h - $tz);
 	$res += ($m/60);
 	return $res;
+}
+
+
+sub yearday {
+	my ($d, $m, $y, $h) = @_;
+	my $numdays = 0;
+	foreach my $yr (2000..($y-1)) {
+		my $add = leapyear($yr) == 1 ? 366 : 365;
+		$numdays += $add;
+	}
+	my $ly = leapyear($y);
+	my $addm = 0;
+	foreach my $mth (1..($m-1)) {
+		$addm = 31 if ($mth ~~ [1,3,5,7,8,10,12]);
+		$addm = 30 if ($mth ~~ [4,6,9,11]);
+		$addm = 29 if ($mth == 2 and $ly == 1);
+		$addm = 28 if ($mth == 2 and $ly == 0);
+		$numdays += $addm;
+	}
+	$numdays += ($d - 1);
+	my $fraction = ($h - 12)/24;
+	my $result = $numdays + $fraction;
+	return $result;
 }
