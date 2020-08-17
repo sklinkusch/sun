@@ -99,6 +99,33 @@ my ($latitude, $longitude, $timezone) = readParameters();
 my $B = $latitude*$d2r;                              # latitude in radian
 my $hours = calcHours($hour, $minute, $timezone);    # hours since 00 utc
 my $T = yearday($day, $month, $year, $hours);        # Julian days since Jan 1, 2000, 12:00 UT
+my $L = 280.460 + 0.9856474 * $T;                    # mean ecliptic longitude in degrees
+my $Ln = normalizeDeg($L);                           # bring it to range [0°;360°]
+my $g = 357.528 + 0.9856003 * $T;                    # mean anomaly
+my $gn = normalizeDeg($g);                           # bring it to range [0°;360°]
+my $e = $d2r*(23.43929111 - 0.0000004 * $T);         # numerical eccentricity
+my $Lambda = ((sin($d2r*$gn))*1.915+$Ln) + 0.020*sin(2*$d2r*$gn); # ecliptic longitude of sun (in degrees)
+my $CosLambda = cos($d2r*$Lambda);                   # cosine of ecliptic longitude (to define the quadrant)
+my $declination = asin(sin($e)*sin($d2r*$Lambda));   # declination (equatorial coordinate system) in radian
+my $rightAscension = atan(tan($d2r*$Lambda)*cos($e)); # right ascension (equatorial coordinate system) in radian
+$rightAscension += $pi if ($CosLambda < 0);          # bring right ascension to correct quadrant (arctan not unique)
+
+# horizontal coordinates of the sun
+my $TMidnight = yearday($day,$month,$year,0);        # number of Julian days at midnight of the day
+my $TMidnightNorm = ($TMidnight/36525);              # number of Julian centuries
+my $theta_GH = 6.697376 + 2400.05134*$TMidnightNorm + 1.002738*$hours;    # mean Greenwich sidereal time
+my $theta_G = $deltaLong * $theta_GH;                # Greenwich hour angle of the primary equinox (in degrees)
+my $theta = $theta_G + $longitude;                   # hour angle of the primary equinox (in degrees)
+my $theta_rad = $d2r * $theta;                       # hour angle of the primary equinox (in radian)
+my $tau = $theta_rad - $rightAscension;              # hour angle of the specified place
+my $denominator = (cos($tau)*sin($B)-(tan($declination)*cos($B)));
+my $azimuth = atan(sin($tau)/$denominator);           # preliminary azimuthal angle
+$azimuth += $pi if ($denominator < 0);                # bring it to the correct quadrant
+$azimuth -= $doublepi if ($azimuth > $pi);            # bring it to the range [-π;+π]
+$azimuth += $doublepi if ($azimuth < (-1*$pi));
+my $height = asin(cos($declination)*cos($tau)*cos($B) + (sin($declination)*sin($B)));  # uncorrected height (in radian)
+my $azimuth_deg = $r2d*$azimuth;                      # azimuth in degrees
+my $height_deg = $r2d*$height;                        # height in degrees
 
 
 sub printExit {
@@ -162,4 +189,16 @@ sub yearday {
 	my $fraction = ($h - 12)/24;
 	my $result = $numdays + $fraction;
 	return $result;
+}
+
+
+sub normalizeDeg {
+	my $l = shift;
+	while ($l < 0) {
+		$l += $fullcircle;
+	}
+	while ($l > $fullcircle) {
+		$l -= $fullcircle;
+	}
+	return $l;
 }
