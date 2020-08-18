@@ -127,6 +127,10 @@ my $height = asin(cos($declination)*cos($tau)*cos($B) + (sin($declination)*sin($
 my $azimuth_deg = $r2d*$azimuth;                      # azimuth in degrees
 my $height_deg = $r2d*$height;                        # height in degrees
 
+# correction due to refraction in the atmosphere
+my $refraction = 1.02 / tan($d2r * ($height_deg + (10.3/($height_deg + 5.11))));    # mean refraction (in arcminutes) for 1010 mbar and 10°C/50°F
+my $correctedHeight = $height_deg + $refraction/60;                                 # corrected height
+
 
 sub printExit {
 	print "Usage: ./sun <day> <month> <year> <hour> <minute>\n";
