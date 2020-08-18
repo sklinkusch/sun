@@ -129,7 +129,12 @@ my $height_deg = $r2d*$height;                        # height in degrees
 
 # correction due to refraction in the atmosphere
 my $refraction = 1.02 / tan($d2r * ($height_deg + (10.3/($height_deg + 5.11))));    # mean refraction (in arcminutes) for 1010 mbar and 10°C/50°F
-my $correctedHeight = $height_deg + $refraction/60;                                 # corrected height
+my $correctedHeight = $height_deg + $refraction/60;                                 # corrected height (in degrees)
+
+# prepare output
+my $lat = degMinSec($latitude);
+my $lon = degMinSec($longitude);
+my $datetime = sprintf("%02u.%02u.%4u, %02u:%02u Ortszeit UTC%+4.1f",$day,$month,$year,$hour,$minute,$timezone);
 
 
 sub printExit {
@@ -205,4 +210,10 @@ sub normalizeDeg {
 		$l -= $fullcircle;
 	}
 	return $l;
+}
+
+
+sub minu {
+	my $value = shift;
+	return $value < 10 ? "0$value" : "$value";
 }
