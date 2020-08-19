@@ -136,6 +136,25 @@ my $lat = degMinSec($latitude);
 my $lon = degMinSec($longitude);
 my $datetime = sprintf("%02u.%02u.%4u, %02u:%02u Ortszeit UTC%+4.1f",$day,$month,$year,$hour,$minute,$timezone);
 
+# mean right ascension
+my $RAh = 24*$rightAscension/$doublepi;
+my $Tn = $T / 36525;                                   # number of Julian centuries
+my $meanRightAscension = 18.71506921 + 2400.0513369*$T + 0.000025862*$T**2 - 0.00000000172*$T**3;
+my $quotient = integer($meanRightAscension/24);
+$meanRightAscension -= 24*$quotient;
+
+# time differences for the sun path
+my $deltaSunriseSunset = deltat($hSun);                                   # time difference between sunrise and sunset
+my $deltaCivilDawn = deltat($hDawnC);                                     # time difference for civil dawn
+my $deltaNauticalDawn = deltat($hDawnN);                                  # time difference for nautical dawn
+my $deltaAstronomicalDawn = deltat($hDawnA);                              # time difference for astronomical dawn
+
+# time equation
+my $lwtmlt = 1.0027379 * ($meanRightAscension - $RAh);
+
+# calculation of times in local world time
+# calculation of times in mean local time
+
 
 sub printExit {
 	print "Usage: ./sun <day> <month> <year> <hour> <minute>\n";
