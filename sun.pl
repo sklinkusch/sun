@@ -153,7 +153,61 @@ my $deltaAstronomicalDawn = deltat($hDawnA);                              # time
 my $lwtmlt = 1.0027379 * ($meanRightAscension - $RAh);
 
 # calculation of times in local world time
+my ($sunrise_lwt, $sunset_lwt) = lwt($deltaSunriseSunset);
+my ($dawnMorningCivil_lwt, $dawnEveningCivil_lwt) = lwt($deltaCivilDawn);
+my ($dawnMorningNautical_lwt, $dawnEveningNautical_lwt) = lwt($deltaNauticalDawn);
+my ($dawnMorningAstronomical_lwt, $dawnEveningAstronomical_lwt) = lwt($deltaAstronomicalDawn);
+
 # calculation of times in mean local time
+my ($sunrise_mlt, $sunset_mlt) = mlt($sunrise_lwt, $sunset_lwt, $lwtmlt);
+my ($dawnMorningCivil_mlt, $dawnEveningCivil_mlt) = mlt($dawnMorningCivil_lwt, $dawnEveningCivil_lwt, $lwtmlt);
+my ($dawnMorningNautical_mlt, $dawnEveningNautical_mlt) = mlt($dawnMorningNautical_lwt, $dawnEveningNautical_lwt, $lwtmlt);
+my ($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt) = mlt($dawnMorningAstronomical_lwt, $dawnEveningAstronomical_lwt, $lwtmlt);
+
+# calculation of times in local time
+my ($sunrise_lc, $sunset_lc) = mlt($sunrise_mlt, $sunset_mlt, $timezone);
+my ($dawnMorningCivil_lc, $dawnEveningCivil_lc) = mlt($dawnMorningCivil_mlt, $dawnEveningCivil_mlt, $timezone);
+my ($dawnMorningNautical_lc, $dawnEveningNautical_lc) = mlt($dawnMorningNautical_mlt, $dawnEveningNautical_mlt, $timezone);
+my ($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc) = mlt($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt, $timezone);
+
+# calculation with hours and minutes
+my ($sunrise, $sunset) = ltime($sunrise_lc, $sunset_lc);
+my ($dawnMorningCivil, $dawnEveningCivil) = ltime($dawnMorningCivil_lc, $dawnEveningCivil_lc);
+my ($dawnMorningNautical, $dawnEveningNautical) = ltime($dawnMorningNautical_lc, $dawnEveningNautical_lc);
+my ($dawnMorningAstronomical, $dawnEveningAstronomical) = ltime($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc);
+
+
+sub ltime {
+	my ($morning, $evening) = @_;
+	my %mtime;
+	my %etime;
+	$mtime{hour} = integer($morning);
+	$etime{hour} = integer($evening);
+	$mtime{minute} = integer(60*($morning - $mtime{hour}));
+	$etime{minute} = integer(60*($evening - $etime{hour}));
+	if($mtime{hour} == $etime{hour} and $mtime{minute} == $etime{minute}){
+		return ("--:--", "--:--");
+	} else {
+		return (sprintf("%02u:%02u", $mtime{hour}, $mtime{minute}),sprintf("%02u:%02u", $etime{hour}, $etime{minute}));
+	}
+}
+
+
+sub lwt {
+	my $timeDifference = shift;
+	my $morning = 12 - $timeDifference;
+	my $evening = 12 + $timeDifference;
+	return ($morning, $evening);
+}
+
+
+sub mlt {
+	my ($morning_a, $evening_a, $add_ab) = @_;
+	my $morning_b = $morning_a + $add_ab;
+	my $evening_b = $evening_a + $add_ab;
+	my @arr = ($morning_a, $morning_b);
+	return @arr;
+}
 
 
 sub printExit {
