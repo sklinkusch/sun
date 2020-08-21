@@ -186,7 +186,7 @@ my ($dawnMorningAstronomical, $dawnEveningAstronomical) = ltime($dawnMorningAstr
 printf "Data for %s\n", $datetime;
 printf "Latitude: %s\n", $lat;
 printf "Longitude: %s\n", $lon;
-printf "Timezone: UTC%+4.1f\n", $timezone;
+printf "Timezone: UTC%+5.2f\n", $timezone;
 printf "Azimuth: %s\n", $azimuthFormatted;
 printf "Height: %s\n", $heightFormatted;
 printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical;
@@ -304,7 +304,7 @@ sub readParameters {
 	open(FILE, $file) || die "cannot open parameter file";
 	while (my $line = <FILE>){
 		my @temp = split(/[ \t]+/,$line);
-		$parameters{$temp[0]} = $temp[1];
+		$parameters{lc($temp[0])} = $temp[1];
 	}
 	close(FILE);
 	return ($parameters{latitude}, $parameters{longitude}, $parameters{timezone});
