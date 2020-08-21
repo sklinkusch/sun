@@ -6,6 +6,7 @@ use diagnostics;
 use POSIX qw(floor ceil);
 use Math::Trig qw(asin acos atan tan deg2rad rad2deg);
 use Math::Trig ':pi';
+use Cwd 'abs_path';
 use Scalar::Util qw(looks_like_number);
 no if ($] >= 5.018), 'warnings' => 'experimental';
 
@@ -23,19 +24,22 @@ my $hDawnN = -12*$d2r;        # height at nautical dawn (-12°0'0") in radian
 my $hDawnA = -18*$d2r;        # height at astronomical dawn (-18°0'0") in radian
 
 # check number of arguments
-if ($#ARGV != 4){
+if ($#ARGV != 5){
 	printExit();
 }
 
+my $parameterfile = abs_path(join('',$ARGV[0]));
+my @numargs = @ARGV[1..5];
+
 # check if arguments are numeric
-foreach my $nrarg (0..$#ARGV) {
-	if(!looks_like_number(join('',$ARGV[$nrarg]))){
+foreach my $nrarg (0..$#numargs) {
+	if(!looks_like_number(join('',$numargs[$nrarg]))){
 		print "Arguments have to be numeric\n";
 		printExit();
 	}
 }
 
-my ($day, $month, $year, $hour, $minute) = @ARGV;
+my ($day, $month, $year, $hour, $minute) = formatData(@numargs);
 
 # minima and maxima for certain levels
 my %min = (
@@ -46,7 +50,7 @@ my %min = (
 	"minute" => 0
 );
 my %max = (
-	"day" => (
+	"day" => {
 		1 => 31,
 		2 => {
 			0 => 28,
@@ -62,7 +66,7 @@ my %max = (
 		10 => 31,
 		11 => 30,
 		12 => 31
-	),
+	},
 	"month" => 12,
 	"hour" => 23,
 	"minute" => 59,
@@ -95,7 +99,7 @@ if ($month != 2){
 }
 
 # read parameters from file
-my ($latitude, $longitude, $timezone) = readParameters();
+my ($latitude, $longitude, $timezone) = readParameters($parameterfile);
 my $B = $latitude*$d2r;                              # latitude in radian
 my $hours = calcHours($hour, $minute, $timezone);    # hours since 00 utc
 my $T = yearday($day, $month, $year, $hours);        # Julian days since Jan 1, 2000, 12:00 UT
@@ -134,12 +138,14 @@ my $correctedHeight = $height_deg + $refraction/60;                             
 # prepare output
 my $lat = degMinSec($latitude);
 my $lon = degMinSec($longitude);
-my $datetime = sprintf("%02u.%02u.%4u, %02u:%02u Ortszeit UTC%+4.1f",$day,$month,$year,$hour,$minute,$timezone);
+my $datetime = sprintf("%02u.%02u.%4u, %02u:%02u Local Time(UTC%+5.2f)",$day,$month,$year,$hour,$minute,$timezone);
+my $azimuthFormatted = degMinSec($azimuth_deg);
+my $heightFormatted = degMinSec($height_deg);
 
 # mean right ascension
 my $RAh = 24*$rightAscension/$doublepi;
 my $Tn = $T / 36525;                                   # number of Julian centuries
-my $meanRightAscension = 18.71506921 + 2400.0513369*$T + 0.000025862*$T**2 - 0.00000000172*$T**3;
+my $meanRightAscension = 18.71506921 + 2400.0513369*$Tn + 0.000025862*$Tn**2 - 0.00000000172*$Tn**3;
 my $quotient = integer($meanRightAscension/24);
 $meanRightAscension -= 24*$quotient;
 
@@ -165,16 +171,79 @@ my ($dawnMorningNautical_mlt, $dawnEveningNautical_mlt) = mlt($dawnMorningNautic
 my ($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt) = mlt($dawnMorningAstronomical_lwt, $dawnEveningAstronomical_lwt, $lwtmlt);
 
 # calculation of times in local time
-my ($sunrise_lc, $sunset_lc) = mlt($sunrise_mlt, $sunset_mlt, $timezone);
-my ($dawnMorningCivil_lc, $dawnEveningCivil_lc) = mlt($dawnMorningCivil_mlt, $dawnEveningCivil_mlt, $timezone);
-my ($dawnMorningNautical_lc, $dawnEveningNautical_lc) = mlt($dawnMorningNautical_mlt, $dawnEveningNautical_mlt, $timezone);
-my ($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc) = mlt($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt, $timezone);
+my ($sunrise_lc, $sunset_lc) = lct($sunrise_mlt, $sunset_mlt, $timezone);
+my ($dawnMorningCivil_lc, $dawnEveningCivil_lc) = lct($dawnMorningCivil_mlt, $dawnEveningCivil_mlt, $timezone);
+my ($dawnMorningNautical_lc, $dawnEveningNautical_lc) = lct($dawnMorningNautical_mlt, $dawnEveningNautical_mlt, $timezone);
+my ($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc) = lct($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt, $timezone);
 
 # calculation with hours and minutes
 my ($sunrise, $sunset) = ltime($sunrise_lc, $sunset_lc);
 my ($dawnMorningCivil, $dawnEveningCivil) = ltime($dawnMorningCivil_lc, $dawnEveningCivil_lc);
 my ($dawnMorningNautical, $dawnEveningNautical) = ltime($dawnMorningNautical_lc, $dawnEveningNautical_lc);
 my ($dawnMorningAstronomical, $dawnEveningAstronomical) = ltime($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc);
+
+# output
+printf "Data for %s\n", $datetime;
+printf "Latitude: %s\n", $lat;
+printf "Longitude: %s\n", $lon;
+printf "Timezone: UTC%+4.1f\n", $timezone;
+printf "Azimuth: %s\n", $azimuthFormatted;
+printf "Height: %s\n", $heightFormatted;
+printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical;
+printf "Nautical morning dawn at: %s\n", $dawnMorningNautical;
+printf "Civil morning dawn at: %s\n", $dawnMorningCivil;
+printf "Sunrise at: %s\n", $sunrise;
+printf "Sunset at: %s\n", $sunset;
+printf "Civil evening dawn at: %s\n", $dawnEveningCivil;
+printf "Nautical evening dawn at: %s\n", $dawnEveningNautical;
+printf "Astronomical evening dawn at: %s\n", $dawnEveningAstronomical;
+
+
+sub lct {
+	my ($morning, $evening, $zone) = @_;
+	my $mn = $morning - $longitude/$deltaLong + $zone;
+	my $ev = $evening - $longitude/$deltaLong + $zone;
+	return ($mn, $ev);
+}
+
+
+sub degMinSec {
+	my $decimal = shift;
+	my $grad = integer($decimal);
+	my $rest = abs($decimal - $grad);
+	my $arcminute = integer(60*$rest);
+	my $remainder = abs(60*$rest - $arcminute);
+	my $arcseconds = 60*$remainder;
+	my $returnvalue = sprintf("%+3d° %02d' %04.1f\"", $grad, $arcminute, $arcseconds);
+}
+
+
+sub formatData {
+	my ($d, $mt, $y, $h, $m) = @_;
+	my $day;
+	my $month;
+	if (length($d) == 2){
+		my $leadingDay = substr($d,0,1);
+		if($leadingDay eq "0"){
+			$day = substr($d,1);
+		} else {
+			$day = $d;
+		}
+	} else {
+		$day = $d;
+	}
+	if (length($mt) == 2){
+		my $leadingMonth = substr($mt,0,1);
+		if($leadingMonth eq "0"){
+			$month = substr($mt,1);
+		} else {
+			$month = $mt;
+		}
+	} else {
+		$month = $mt;
+	}
+	return ($day, $month, $y, $h, $m);
+}
 
 
 sub ltime {
@@ -205,8 +274,7 @@ sub mlt {
 	my ($morning_a, $evening_a, $add_ab) = @_;
 	my $morning_b = $morning_a + $add_ab;
 	my $evening_b = $evening_a + $add_ab;
-	my @arr = ($morning_a, $morning_b);
-	return @arr;
+	return ($morning_b, $evening_b);
 }
 
 
@@ -231,10 +299,11 @@ sub leapyear {
 
 
 sub readParameters {
+	my $file = shift;
 	my %parameters;
-	open(FILE, "sun.dat") || die "cannot open parameter file";
+	open(FILE, $file) || die "cannot open parameter file";
 	while (my $line = <FILE>){
-		my @temp = split(/ [\t]/,$line);
+		my @temp = split(/[ \t]+/,$line);
 		$parameters{$temp[0]} = $temp[1];
 	}
 	close(FILE);
@@ -289,4 +358,21 @@ sub normalizeDeg {
 sub minu {
 	my $value = shift;
 	return $value < 10 ? "0$value" : "$value";
+}
+
+
+sub integer {
+	my $val = shift;
+	if($val < 0){
+		return ceil($val);
+	} else {
+		return floor($val);
+	}
+}
+
+
+sub deltat {
+	my $h = shift;
+	my $res = 12*acos((sin($h)-(sin($B)*sin($declination)))/(cos($B)*cos($declination)))/$pi;
+	return $res;
 }
