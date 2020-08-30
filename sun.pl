@@ -279,7 +279,7 @@ sub mlt {
 
 
 sub printExit {
-	print "Usage: ./sun <day> <month> <year> <hour> <minute>\n";
+	print "Usage: ./sun <parameter file name> <day> <month> <year> <hour> <minute>\n";
 	exit;
 }
 
