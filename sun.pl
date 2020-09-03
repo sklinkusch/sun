@@ -252,12 +252,13 @@ sub geoDegMinSec {
 sub degMinSec {
 	my $decimal = shift;
 	my $sign = $decimal < 0 ? "-" : "+";
-	my $grad = integer($decimal);
-	my $rest = abs($decimal - $grad);
+	my $absDecimal = abs($decimal);
+	my $grad = integer($absDecimal);
+	my $rest = abs($absDecimal - $grad);
 	my $arcminute = integer(60*$rest);
 	my $remainder = abs(60*$rest - $arcminute);
 	my $arcseconds = 60*$remainder;
-	my $returnvalue = sprintf("%1s% 3d° %02d' %04.1f\"", $sign, $grad, $arcminute, $arcseconds);
+	my $returnvalue = sprintf("%1s% 3u° %02d' %04.1f\"", $sign, $grad, $arcminute, $arcseconds);
 }
 
 
