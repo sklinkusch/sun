@@ -136,8 +136,8 @@ my $refraction = 1.02 / tan($d2r * ($height_deg + (10.3/($height_deg + 5.11))));
 my $correctedHeight = $height_deg + $refraction/60;                                 # corrected height (in degrees)
 
 # prepare output
-my $lat = degMinSec($latitude);
-my $lon = degMinSec($longitude);
+my $lat = geoDegMinSec($latitude, "lat");
+my $lon = geoDegMinSec($longitude, "lon");
 my $datetime = sprintf("%02u.%02u.%4u, %02u:%02u Local Time(UTC%+5.2f)",$day,$month,$year,$hour,$minute,$timezone);
 my $azimuthFormatted = degMinSec($azimuth_deg);
 my $heightFormatted = degMinSec($height_deg);
@@ -184,18 +184,18 @@ my ($dawnMorningAstronomical, $dawnEveningAstronomical) = ltime($dawnMorningAstr
 
 # output
 printf "Data for %s\n", $datetime;
-printf "Latitude: %s\n", $lat;
-printf "Longitude: %s\n", $lon;
-printf "Timezone: UTC%+5.2f\n", $timezone;
-printf "Azimuth: %s\n", $azimuthFormatted;
-printf "Height: %s\n", $heightFormatted;
+printf "Latitude:                     %s\n", $lat;
+printf "Longitude:                    %s\n", $lon;
+printf "Timezone:                     UTC%+5.2f\n", $timezone;
+printf "Azimuth:                      %s\n", $azimuthFormatted;
+printf "Height:                       %s\n", $heightFormatted;
 printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical;
-printf "Nautical morning dawn at: %s\n", $dawnMorningNautical;
-printf "Civil morning dawn at: %s\n", $dawnMorningCivil;
-printf "Sunrise at: %s\n", $sunrise;
-printf "Sunset at: %s\n", $sunset;
-printf "Civil evening dawn at: %s\n", $dawnEveningCivil;
-printf "Nautical evening dawn at: %s\n", $dawnEveningNautical;
+printf "Nautical morning dawn at:     %s\n", $dawnMorningNautical;
+printf "Civil morning dawn at:        %s\n", $dawnMorningCivil;
+printf "Sunrise at:                   %s\n", $sunrise;
+printf "Sunset at:                    %s\n", $sunset;
+printf "Civil evening dawn at:        %s\n", $dawnEveningCivil;
+printf "Nautical evening dawn at:     %s\n", $dawnEveningNautical;
 printf "Astronomical evening dawn at: %s\n", $dawnEveningAstronomical;
 
 
@@ -207,14 +207,36 @@ sub lct {
 }
 
 
+sub geoDegMinSec {
+	my ($decimal, $dir) = @_;
+	my $absDecimal = abs($decimal);
+	my $grad = integer($absDecimal);
+	my $rest = $absDecimal - $grad;
+	my $arcminute = integer(60*$rest);
+	my $remainder = abs(60*$rest - $arcminute);
+	my $arcseconds = 60*$remainder;
+	my $DIR;
+
+	if ($decimal > 0){
+		$DIR = $dir eq "lat" ? "N" : "E";
+	} elsif ($decimal < 0){
+		$DIR = $dir eq "lat" ? "S" : "W";
+	} else {
+		$DIR = " ";
+	}
+	my $returnvalue = sprintf("% 3d° %02d' %04.1f\" %1s", $grad, $arcminute, $arcseconds, $DIR);
+}
+
+
 sub degMinSec {
 	my $decimal = shift;
+	my $sign = $decimal < 0 ? "-" : "+";
 	my $grad = integer($decimal);
 	my $rest = abs($decimal - $grad);
 	my $arcminute = integer(60*$rest);
 	my $remainder = abs(60*$rest - $arcminute);
 	my $arcseconds = 60*$remainder;
-	my $returnvalue = sprintf("%+3d° %02d' %04.1f\"", $grad, $arcminute, $arcseconds);
+	my $returnvalue = sprintf("%1s% 3d° %02d' %04.1f\"", $sign, $grad, $arcminute, $arcseconds);
 }
 
 
