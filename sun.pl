@@ -182,6 +182,12 @@ my ($dawnMorningCivil, $dawnEveningCivil) = ltime($dawnMorningCivil_lc, $dawnEve
 my ($dawnMorningNautical, $dawnEveningNautical) = ltime($dawnMorningNautical_lc, $dawnEveningNautical_lc);
 my ($dawnMorningAstronomical, $dawnEveningAstronomical) = ltime($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc);
 
+# normalize times
+my ($sunrise_norm, $sunset_norm) = norm($sunrise, $sunset);
+my ($dawnMorningCivil_norm, $dawnEveningCivil_norm) = norm($dawnMorningCivil, $dawnEveningCivil);
+my ($dawnMorningNautical_norm, $dawnEveningNautical_norm) = norm($dawnMorningNautical, $dawnEveningNautical);
+my ($dawnMorningAstronomical_norm, $dawnEveningAstronomical_norm) = norm($dawnMorningAstronomical, $dawnEveningAstronomical);
+
 # output
 printf "Data for %s\n", $datetime;
 printf "Latitude:                     %s\n", $lat;
@@ -189,14 +195,14 @@ printf "Longitude:                    %s\n", $lon;
 printf "Timezone:                     UTC%+5.2f\n", $timezone;
 printf "Azimuth:                      %s\n", $azimuthFormatted;
 printf "Height:                       %s\n", $heightFormatted;
-printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical;
-printf "Nautical morning dawn at:     %s\n", $dawnMorningNautical;
-printf "Civil morning dawn at:        %s\n", $dawnMorningCivil;
-printf "Sunrise at:                   %s\n", $sunrise;
-printf "Sunset at:                    %s\n", $sunset;
-printf "Civil evening dawn at:        %s\n", $dawnEveningCivil;
-printf "Nautical evening dawn at:     %s\n", $dawnEveningNautical;
-printf "Astronomical evening dawn at: %s\n", $dawnEveningAstronomical;
+printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical_norm;
+printf "Nautical morning dawn at:     %s\n", $dawnMorningNautical_norm;
+printf "Civil morning dawn at:        %s\n", $dawnMorningCivil_norm;
+printf "Sunrise at:                   %s\n", $sunrise_norm;
+printf "Sunset at:                    %s\n", $sunset_norm;
+printf "Civil evening dawn at:        %s\n", $dawnEveningCivil_norm;
+printf "Nautical evening dawn at:     %s\n", $dawnEveningNautical_norm;
+printf "Astronomical evening dawn at: %s\n", $dawnEveningAstronomical_norm;
 
 
 sub lct {
@@ -204,6 +210,21 @@ sub lct {
 	my $mn = $morning - $longitude/$deltaLong + $zone;
 	my $ev = $evening - $longitude/$deltaLong + $zone;
 	return ($mn, $ev);
+}
+
+
+sub norm {
+	my ($m, $e) = @_;
+	my ($mh, $mm) = split(/:/,$m);
+	my ($eh, $em) = split(/:/,$e);
+	if(looks_like_number($mh) and looks_like_number($mm) and looks_like_number($eh) and looks_like_number($em)){
+		$mh += 24 if ($mh < 0);
+		$eh -= 24 if ($eh > 23);
+		my $mc = ($mh == $eh and $mm == $em) ? "--:--" : sprintf("%02u:%02u", $mh, $mm);
+		my $ec = ($mh == $eh and $mm == $em) ? "--:--" : sprintf("%02u:%02u", $eh, $em);
+		return ($mc, $ec);
+	}
+	return ($m, $e);
 }
 
 
@@ -385,6 +406,7 @@ sub minu {
 
 sub integer {
 	my $val = shift;
+	return 0 if (!looks_like_number($val));
 	if($val < 0){
 		return ceil($val);
 	} else {
