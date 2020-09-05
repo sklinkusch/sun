@@ -100,6 +100,9 @@ if ($month != 2){
 
 # read parameters from file
 my ($latitude, $longitude, $timezone) = readParameters($parameterfile);
+my $timezoneSign = $timezone < 0 ? "-" : "+";
+my $absTimezone = abs($timezone);
+my $timezoneF = formatTime($absTimezone);
 my $B = $latitude*$d2r;                              # latitude in radian
 my $hours = calcHours($hour, $minute, $timezone);    # hours since 00 utc
 my $T = yearday($day, $month, $year, $hours);        # Julian days since Jan 1, 2000, 12:00 UT
@@ -138,7 +141,8 @@ my $correctedHeight = $height_deg + $refraction/60;                             
 # prepare output
 my $lat = geoDegMinSec($latitude, "lat");
 my $lon = geoDegMinSec($longitude, "lon");
-my $datetime = sprintf("%02u.%02u.%4u, %02u:%02u Local Time(UTC%+5.2f)",$day,$month,$year,$hour,$minute,$timezone);
+my $monthName = nameMonth($month);
+my $datetime = sprintf("%02u %s %4u, %02u:%02u Local Time (UTC%1s%5s)",$day,$monthName,$year,$hour,$minute,$timezoneSign, $timezoneF);
 my $azimuthFormatted = degMinSec($azimuth_deg);
 my $heightFormatted = degMinSec($height_deg);
 
@@ -192,7 +196,7 @@ my ($dawnMorningAstronomical_norm, $dawnEveningAstronomical_norm) = norm($dawnMo
 printf "Data for %s\n", $datetime;
 printf "Latitude:                     %s\n", $lat;
 printf "Longitude:                    %s\n", $lon;
-printf "Timezone:                     UTC%+5.2f\n", $timezone;
+printf "Timezone:                     UTC%1s%5s\n", $timezoneSign, $timezoneF;
 printf "Azimuth:                      %s\n", $azimuthFormatted;
 printf "Height:                       %s\n", $heightFormatted;
 printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical_norm;
@@ -210,6 +214,33 @@ sub lct {
 	my $mn = $morning - $longitude/$deltaLong + $zone;
 	my $ev = $evening - $longitude/$deltaLong + $zone;
 	return ($mn, $ev);
+}
+
+
+sub nameMonth {
+	my $monthNumber = shift;
+	return "January" if ($monthNumber == 1);
+	return "February" if ($monthNumber == 2);
+	return "March" if ($monthNumber == 3);
+	return "April" if ($monthNumber == 4);
+	return "May" if ($monthNumber == 5);
+	return "June" if ($monthNumber == 6);
+	return "July" if ($monthNumber == 7);
+	return "August" if ($monthNumber == 8);
+	return "September" if ($monthNumber == 9);
+	return "October" if ($monthNumber == 10);
+	return "November" if ($monthNumber == 11);
+	return "December" if ($monthNumber == 12);
+	return "$monthNumber";
+}
+
+
+sub formatTime {
+	my $timeRaw = shift;
+	my $hours = integer($timeRaw);
+	my $minutes = 60 * ($timeRaw - $hours);
+	my $timeFormatted = sprintf("%02u:%02u", $hours, $minutes);
+	return $timeFormatted;
 }
 
 
