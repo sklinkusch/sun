@@ -250,6 +250,8 @@ sub norm {
 	my ($eh, $em) = split(/:/,$e);
 	if(looks_like_number($mh) and looks_like_number($mm) and looks_like_number($eh) and looks_like_number($em)){
 		$mh += 24 if ($mh < 0);
+		$mh -= 24 if ($mh > 23);
+		$eh += 24 if ($eh < 0);
 		$eh -= 24 if ($eh > 23);
 		my $mc = ($mh == $eh and $mm == $em) ? "--:--" : sprintf("%02u:%02u", $mh, $mm);
 		my $ec = ($mh == $eh and $mm == $em) ? "--:--" : sprintf("%02u:%02u", $eh, $em);
