@@ -108,9 +108,10 @@ my $dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hou
 my $tzRaw = $tz->offset_for_datetime($dt);
 my $timezoneSign = $tzRaw < 0 ? "-" : "+";
 my $absTimezone = abs($tzRaw) / 3600;
+my $tzForm = $tzRaw < 0 ? -1*$absTimezone : $absTimezone;
 my $timezoneF = formatTime($absTimezone);
 my $B = $latitude*$d2r;                              # latitude in radian
-my $hours = calcHours($hour, $minute, $timezone);    # hours since 00 utc
+my $hours = calcHours($hour, $minute, $tzForm);    # hours since 00 utc
 my $T = yearday($day, $month, $year, $hours);        # Julian days since Jan 1, 2000, 12:00 UT
 my $L = 280.460 + 0.9856474 * $T;                    # mean ecliptic longitude in degrees
 my $Ln = normalizeDeg($L);                           # bring it to range [0°;360°]
@@ -181,10 +182,10 @@ my ($dawnMorningNautical_mlt, $dawnEveningNautical_mlt) = mlt($dawnMorningNautic
 my ($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt) = mlt($dawnMorningAstronomical_lwt, $dawnEveningAstronomical_lwt, $lwtmlt);
 
 # calculation of times in local time
-my ($sunrise_lc, $sunset_lc) = lct($sunrise_mlt, $sunset_mlt, $timezone);
-my ($dawnMorningCivil_lc, $dawnEveningCivil_lc) = lct($dawnMorningCivil_mlt, $dawnEveningCivil_mlt, $timezone);
-my ($dawnMorningNautical_lc, $dawnEveningNautical_lc) = lct($dawnMorningNautical_mlt, $dawnEveningNautical_mlt, $timezone);
-my ($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc) = lct($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt, $timezone);
+my ($sunrise_lc, $sunset_lc) = lct($sunrise_mlt, $sunset_mlt, $tzForm);
+my ($dawnMorningCivil_lc, $dawnEveningCivil_lc) = lct($dawnMorningCivil_mlt, $dawnEveningCivil_mlt, $tzForm);
+my ($dawnMorningNautical_lc, $dawnEveningNautical_lc) = lct($dawnMorningNautical_mlt, $dawnEveningNautical_mlt, $tzForm);
+my ($dawnMorningAstronomical_lc, $dawnEveningAstronomical_lc) = lct($dawnMorningAstronomical_mlt, $dawnEveningAstronomical_mlt, $tzForm);
 
 # calculation with hours and minutes
 my ($sunrise, $sunset) = ltime($sunrise_lc, $sunset_lc);
