@@ -21,17 +21,17 @@ the timezone is the Central European Summer Time (UTC+2.00)
 ```
 latitude  52.516389
 longitude 13.377778
-timezone  2.00
+timezone  Europe/Berlin
 ```
 
 The order of the three items is arbitrary. Each line has to begin with one of
 the three keywords (latitude, longitude, and timezone), then comes a whitespace
-(or several ones or tabs), and finally the **decimal** value. The latitude is
-positive for the northern hemisphere, negative for the southern hemisphere. The
-longitude is positive for all places to the east of the Greenwich meridian and
-negative for all places to the west. The timezone is defined as the time offset
-with respect to the universal time code including Daylight Saving Time. Note
-that e.g. an offset of four hours and thirty minutes is given as 4.50.
+(or several ones or tabs), and finally the **decimal** value for the
+geocoordinates. The latitude is positive for the northern hemisphere, negative
+for the southern hemisphere. The longitude is positive for all places to the
+east of the Greenwich meridian and negative for all places to the west. The
+timezone is defined according to the tz database. A list of timezones is given
+[here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 
 # Usage
 
