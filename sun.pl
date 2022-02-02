@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 use diagnostics;
+use DateTime;
+use DateTime::TimeZone;
 use POSIX qw(floor ceil);
 use Math::Trig qw(asin acos atan tan deg2rad rad2deg);
 use Math::Trig ':pi';
@@ -100,8 +102,12 @@ if ($month != 2){
 
 # read parameters from file
 my ($latitude, $longitude, $timezone) = readParameters($parameterfile);
-my $timezoneSign = $timezone < 0 ? "-" : "+";
-my $absTimezone = abs($timezone);
+chomp($timezone);
+my $tz = DateTime::TimeZone->new(name => $timezone);
+my $dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
+my $tzRaw = $tz->offset_for_datetime($dt);
+my $timezoneSign = $tzRaw < 0 ? "-" : "+";
+my $absTimezone = abs($tzRaw) / 3600;
 my $timezoneF = formatTime($absTimezone);
 my $B = $latitude*$d2r;                              # latitude in radian
 my $hours = calcHours($hour, $minute, $timezone);    # hours since 00 utc
