@@ -105,7 +105,7 @@ my ($latitude, $longitude, $timezone) = readParameters($parameterfile);
 chomp($timezone);
 my $tz = DateTime::TimeZone->new(name => $timezone);
 my $dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
-my $tzRaw = $tz->offset_for_datetime($dt);
+my $tzRaw = $tz->offset_for_local_datetime($dt);
 my $timezoneSign = $tzRaw < 0 ? "-" : "+";
 my $absTimezone = abs($tzRaw) / 3600;
 my $tzForm = $tzRaw < 0 ? -1*$absTimezone : $absTimezone;
