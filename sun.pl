@@ -26,78 +26,91 @@ my $hDawnN = -12*$d2r;        # height at nautical dawn (-12°0'0") in radian
 my $hDawnA = -18*$d2r;        # height at astronomical dawn (-18°0'0") in radian
 
 # check number of arguments
-if ($#ARGV != 5){
+if ($#ARGV != 0 and $#ARGV != 5){
 	printExit();
 }
 
 my $parameterfile = abs_path(join('',$ARGV[0]));
-my @numargs = @ARGV[1..5];
+my $day;
+my $month;
+my $year;
+my $hour;
+my $minute;
+if ($#ARGV != 0){
+	my @numargs = @ARGV[1..5];
 
-# check if arguments are numeric
-foreach my $nrarg (0..$#numargs) {
-	if(!looks_like_number(join('',$numargs[$nrarg]))){
-		print "Arguments have to be numeric\n";
-		printExit();
+	# check if arguments are numeric
+	foreach my $nrarg (0..$#numargs) {
+		if(!looks_like_number(join('',$numargs[$nrarg]))){
+			print "Arguments have to be numeric\n";
+			printExit();
+		}
 	}
-}
+	($day, $month, $year, $hour, $minute) = formatData(@numargs);
 
-my ($day, $month, $year, $hour, $minute) = formatData(@numargs);
-
-# minima and maxima for certain levels
-my %min = (
-	"day" => 1,
-	"month" => 1,
-	"year" => 2000,
-	"hour" => 0,
-	"minute" => 0
-);
-my %max = (
-	"day" => {
-		1 => 31,
-		2 => {
-			0 => 28,
-			1 => 29
+	# minima and maxima for certain levels
+	my %min = (
+		"day" => 1,
+		"month" => 1,
+		"year" => 2000,
+		"hour" => 0,
+		"minute" => 0
+	);
+	my %max = (
+		"day" => {
+			1 => 31,
+			2 => {
+				0 => 28,
+				1 => 29
+			},
+			3 => 31,
+			4 => 30,
+			5 => 31,
+			6 => 30,
+			7 => 31,
+			8 => 31,
+			9 => 30,
+			10 => 31,
+			11 => 30,
+			12 => 31
 		},
-		3 => 31,
-		4 => 30,
-		5 => 31,
-		6 => 30,
-		7 => 31,
-		8 => 31,
-		9 => 30,
-		10 => 31,
-		11 => 30,
-		12 => 31
-	},
-	"month" => 12,
-	"hour" => 23,
-	"minute" => 59,
-);
+		"month" => 12,
+		"hour" => 23,
+		"minute" => 59,
+	);
 
-# check if time is sensible
-if ($minute < $min{minute} or $minute > $max{minute}){
-	printNotSensible();
-}
-if ($hour < $min{hour} or $hour > $max{hour}){
-	printNotSensible();
-}
-
-# check if date is sensible and computable
-if ($year < $min{year}){
-	printNotSensible();
-}
-my $leap = leapyear($year);
-if ($month < $min{month} or $month > $max{month}){
-	printNotSensible();
-}
-if ($month != 2){
-	if ($day < $min{day} or $day > $max{day}{$month}){
+	# check if time is sensible
+	if ($minute < $min{minute} or $minute > $max{minute}){
 		printNotSensible();
+	}
+	if ($hour < $min{hour} or $hour > $max{hour}){
+		printNotSensible();
+	}
+
+	# check if date is sensible and computable
+	if ($year < $min{year}){
+		printNotSensible();
+	}
+	my $leap = leapyear($year);
+	if ($month < $min{month} or $month > $max{month}){
+		printNotSensible();
+	}
+	if ($month != 2){
+		if ($day < $min{day} or $day > $max{day}{$month}){
+			printNotSensible();
+		}
+	} else {
+		if ($day < $min{day} or $day > $max{day}{$month}{$leap}){
+			printNotSensible();
+		}
 	}
 } else {
-	if ($day < $min{day} or $day > $max{day}{$month}{$leap}){
-		printNotSensible();
-	}
+	my $now = DateTime->now;
+	$year = $now->year;
+	$month = $now->month;
+	$day = $now->day;
+	$hour = $now->hour;
+	$minute = $now->minute;
 }
 
 # read parameters from file
