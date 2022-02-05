@@ -36,6 +36,12 @@ my $month;
 my $year;
 my $hour;
 my $minute;
+my $latitude;
+my $longitude;
+my $timezone;
+my $tz;
+my $dt;
+
 if ($#ARGV != 0){
 	my @numargs = @ARGV[1..5];
 
@@ -104,20 +110,24 @@ if ($#ARGV != 0){
 			printNotSensible();
 		}
 	}
+	($latitude, $longitude, $timezone) = readParameters($parameterfile);
+	chomp($timezone);
+	$tz = DateTime::TimeZone->new(name => $timezone);
+	$dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
 } else {
-	my $now = DateTime->now;
+	($latitude, $longitude, $timezone) = readParameters($parameterfile);
+	chomp($timezone);
+	$tz = DateTime::TimeZone->new(name => $timezone);
+	my $now = DateTime->now( time_zone => $timezone);
 	$year = $now->year;
 	$month = $now->month;
 	$day = $now->day;
 	$hour = $now->hour;
 	$minute = $now->minute;
+	$dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
 }
 
 # read parameters from file
-my ($latitude, $longitude, $timezone) = readParameters($parameterfile);
-chomp($timezone);
-my $tz = DateTime::TimeZone->new(name => $timezone);
-my $dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
 my $tzRaw = $tz->offset_for_local_datetime($dt);
 my $timezoneSign = $tzRaw < 0 ? "-" : "+";
 my $absTimezone = abs($tzRaw) / 3600;
