@@ -128,9 +128,19 @@ if ($#ARGV != 0){
 }
 
 # read parameters from file
-my $tzRaw = $tz->offset_for_local_datetime($dt);
-my $timezoneSign = $tzRaw < 0 ? "-" : "+";
-my $absTimezone = abs($tzRaw) / 3600;
+my $tzRaw = $tz->offset_for_local_datetime($dt);     # signed offset in seconds
+my $timezoneSign = $tzRaw < 0 ? "-" : "+";           # sign of offset
+my $absTimezone = abs($tzRaw) / 3600;                # unsigned offset in hours
+my $minTimezone = $tzRaw / 60;                       # timezone offset in minutes
+my $localTime = $hour * 60 + $minute;                # local time in minutes
+my $utcTimeMin = $localTime - $minTimezone;          # utc time in minutes
+if($utcTimeMin < 0) {                                # no lower time than 00:00
+	$utcTimeMin += 1440;
+} elsif ($utcTimeMin >= 1440) {                      # no higher time than 23:59
+	$utcTimeMin -= 1440;
+}
+my $utcHours = floor($utcTimeMin / 60);              # hours in UTC time
+my $utcMinutes = $utcTimeMin % 60;                   # minutes in UTC time
 my $tzForm = $tzRaw < 0 ? -1*$absTimezone : $absTimezone;
 my $timezoneF = formatTime($absTimezone);
 my $B = $latitude*$d2r;                              # latitude in radian
@@ -227,6 +237,9 @@ printf "Data for %s\n", $datetime;
 printf "Latitude:                     %s\n", $lat;
 printf "Longitude:                    %s\n", $lon;
 printf "Timezone:                     UTC%1s%5s\n", $timezoneSign, $timezoneF;
+printf "Date (local time):            %02u/%02u/%04u\n", $day, $month, $year;
+printf "Time (local time):            %02u:%02u\n", $hour, $minute;
+printf "Time (world time):            %02u:%02u\n", $utcHours, $utcMinutes;
 printf "Azimuth:                      %s\n", $azimuthFormatted;
 printf "Height:                       %s\n", $heightFormatted;
 printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical_norm;
