@@ -141,8 +141,17 @@ if($utcTimeMin < 0) {                                # no lower time than 00:00
 }
 my $utcHours = floor($utcTimeMin / 60);              # hours in UTC time
 my $utcMinutes = $utcTimeMin % 60;                   # minutes in UTC time
-my $tzForm = $tzRaw < 0 ? -1*$absTimezone : $absTimezone;
-my $timezoneF = formatTime($absTimezone);
+my $solarOffsetMinutes = 4 * $longitude;             # calculate solar offset from UTC in minutes
+my $solarTimeMin = $utcTimeMin + $solarOffsetMinutes;# solar time (raw) in minutes
+if($solarTimeMin < 0) {                              # preserve boundaries 00:00 - 23:59
+	$solarTimeMin += 1440;
+} elsif($solarTimeMin >= 1440) {
+	$solarTimeMin -= 1440;
+}
+my $solarHours = floor($solarTimeMin / 60);          # hours of solar time
+my $solarMinutes = $solarTimeMin % 60;               # minutes of solar time
+my $tzForm = $tzRaw < 0 ? -1*$absTimezone : $absTimezone; # local time offset in hours
+my $timezoneF = formatTime($absTimezone);            # timezone formatted
 my $B = $latitude*$d2r;                              # latitude in radian
 my $hours = calcHours($hour, $minute, $tzForm);    # hours since 00 utc
 my $T = yearday($day, $month, $year, $hours);        # Julian days since Jan 1, 2000, 12:00 UT
@@ -233,13 +242,13 @@ my ($dawnMorningNautical_norm, $dawnEveningNautical_norm) = norm($dawnMorningNau
 my ($dawnMorningAstronomical_norm, $dawnEveningAstronomical_norm) = norm($dawnMorningAstronomical, $dawnEveningAstronomical);
 
 # output
-printf "Data for %s\n", $datetime;
 printf "Latitude:                     %s\n", $lat;
 printf "Longitude:                    %s\n", $lon;
 printf "Timezone:                     UTC%1s%5s\n", $timezoneSign, $timezoneF;
 printf "Date (local time):            %02u/%02u/%04u\n", $day, $month, $year;
 printf "Time (local time):            %02u:%02u\n", $hour, $minute;
 printf "Time (world time):            %02u:%02u\n", $utcHours, $utcMinutes;
+printf "Time (solar time):            %02u:%02u\n", $solarHours, $solarMinutes;
 printf "Azimuth:                      %s\n", $azimuthFormatted;
 printf "Height:                       %s\n", $heightFormatted;
 printf "Astronomical morning dawn at: %s\n", $dawnMorningAstronomical_norm;
