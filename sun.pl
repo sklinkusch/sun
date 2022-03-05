@@ -26,7 +26,7 @@ my $hDawnN = -12*$d2r;        # height at nautical dawn (-12°0'0") in radian
 my $hDawnA = -18*$d2r;        # height at astronomical dawn (-18°0'0") in radian
 
 # check number of arguments
-if ($#ARGV != 0 and $#ARGV != 5){
+if ($#ARGV != 0 and $#ARGV != 3 and $#ARGV != 5){
 	printExit();
 }
 
@@ -42,7 +42,7 @@ my $timezone;
 my $tz;
 my $dt;
 
-if ($#ARGV != 0){
+if ($#ARGV == 5){
 	my @numargs = @ARGV[1..5];
 
 	# check if arguments are numeric
@@ -114,6 +114,24 @@ if ($#ARGV != 0){
 	chomp($timezone);
 	$tz = DateTime::TimeZone->new(name => $timezone);
 	$dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
+} elsif ($#ARGV == 3) {
+	my @numargs = @ARGV[1..3];
+
+	# check if arguments are numeric
+	foreach my $nrarg (0..$#numargs) {
+		if(!looks_like_number(join('',$numargs[$nrarg]))){
+			print "Arguments have to be numeric\n";
+			printExit();
+		}
+	}
+	($day, $month, $year) = formatData(@numargs);
+	($latitude, $longitude, $timezone) = readParameters($parameterfile);
+	chomp($timezone);
+	$tz = DateTime::TimeZone->new(name => $timezone);
+	my $now = DateTime->now( time_zone => $timezone);
+	$hour = $now->hour;
+	$minute = $now->minute;
+	$dt = DateTime->new(year => $year, month => $month, day => $day, hour => $hour, minute => $minute, second => 0);
 } else {
 	($latitude, $longitude, $timezone) = readParameters($parameterfile);
 	chomp($timezone);
@@ -184,7 +202,7 @@ my $azimuth_deg = $r2d*$azimuth;                      # azimuth in degrees
 my $height_deg = $r2d*$height;                        # height in degrees
 
 # correction due to refraction in the atmosphere
-my $refraction = 1.02 / tan($d2r * ($height_deg + (10.3/($height_deg + 5.11))));    # mean refraction (in arcminutes) for 1010 mbar and 10°C/50°F
+my $refraction = 1.02 / tan($d2r * ($height_deg + (10.3/($height_deg + 5.11))));    # mean refraction (in arcminutes) for 1010 mbar and 10°C/50��F
 my $correctedHeight = $height_deg + $refraction/60;                                 # corrected height (in degrees)
 
 # prepare output
@@ -372,6 +390,34 @@ sub formatData {
 		$month = $mt;
 	}
 	return ($day, $month, $y, $h, $m);
+}
+
+
+sub formatDataSole {
+	my ($d, $mt, $y) = @_;
+	my $day;
+	my $month;
+	if (length($d) == 2){
+		my $leadingDay = substr($d,0,1);
+		if($leadingDay eq "0"){
+			$day = substr($d,1);
+		} else {
+			$day = $d;
+		}
+	} else {
+		$day = $d;
+	}
+	if (length($mt) == 2){
+		my $leadingMonth = substr($mt,0,1);
+		if($leadingMonth eq "0"){
+			$month = substr($mt,1);
+		} else {
+			$month = $mt;
+		}
+	} else {
+		$month = $mt;
+	}
+	return ($day, $month, $y);
 }
 
 
